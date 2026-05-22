@@ -1,0 +1,40 @@
+CREATE TABLE IF NOT EXISTS projects (
+  id BIGSERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  database_url TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS schema_tables (
+  id BIGSERIAL PRIMARY KEY,
+  project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  table_name TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS schema_columns (
+  id BIGSERIAL PRIMARY KEY,
+  table_id BIGINT NOT NULL REFERENCES schema_tables(id) ON DELETE CASCADE,
+  column_name TEXT NOT NULL,
+  data_type TEXT NOT NULL,
+  is_nullable BOOLEAN NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS schema_relationships (
+  id BIGSERIAL PRIMARY KEY,
+  project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  from_table TEXT NOT NULL,
+  from_column TEXT NOT NULL,
+  to_table TEXT NOT NULL,
+  to_column TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS query_logs (
+  id BIGSERIAL PRIMARY KEY,
+  project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  user_question TEXT NOT NULL,
+  generated_sql TEXT NOT NULL,
+  status TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

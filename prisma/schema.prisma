@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  projects     Project[]
+
+  @@map("users")
+}
+
+model Project {
+  id            BigInt               @id @default(autoincrement())
+  name          String
+  databaseUrl   String               @map("database_url")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  userId        String               @map("user_id")
+  user          User                 @relation(fields: [userId], references: [id])
+  schemaTables  SchemaTable[]
+  relationships SchemaRelationship[]
+  queryLogs     QueryLog[]
+
+  @@map("projects")
+}
+
+model SchemaTable {
+  id          BigInt         @id @default(autoincrement())
+  projectId   BigInt         @map("project_id")
+  tableName   String         @map("table_name")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  embedding   Unsupported("vector(1536)")?
+  project     Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  columns     SchemaColumn[]
+
+  @@map("schema_tables")
+}
+
+model SchemaColumn {
+  id          BigInt      @id @default(autoincrement())
+  tableId     BigInt      @map("table_id")
+  columnName  String      @map("column_name")
+  dataType    String      @map("data_type")
+  isNullable  Boolean     @map("is_nullable")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  table       SchemaTable @relation(fields: [tableId], references: [id], onDelete: Cascade)
+
+  @@map("schema_columns")
+}
+
+model SchemaRelationship {
+  id          BigInt   @id @default(autoincrement())
+  projectId   BigInt   @map("project_id")
+  fromTable   String   @map("from_table")
+  fromColumn  String   @map("from_column")
+  toTable     String   @map("to_table")
+  toColumn    String   @map("to_column")
+  createdAt   DateTime @default(now()) @map("created_at")
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("schema_relationships")
+}
+
+model QueryLog {
+  id          BigInt   @id @default(autoincrement())
+  projectId   BigInt   @map("project_id")
+  query       String
+  sql         String
+  createdAt   DateTime @default(now()) @map("created_at")
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("query_logs")
+}
