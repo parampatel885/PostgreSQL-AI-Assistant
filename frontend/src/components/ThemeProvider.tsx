@@ -1,46 +1,44 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
-type Theme = "dark" | "light" | "system";
+type Theme = "dark" | "light";
 
-interface ThemeProviderProps {
-  children: React.ReactNode;
-  defaultTheme?: Theme;
-}
-
-interface ThemeProviderState {
+interface ThemeContextValue {
   theme: Theme;
-  setTheme: (theme: Theme) => void;
+  toggle: () => void;
 }
 
-const ThemeProviderContext = createContext<ThemeProviderState>({
-  theme: "system",
-  setTheme: () => null,
+const ThemeContext = createContext<ThemeContextValue>({
+  theme: "dark",
+  toggle: () => {},
 });
 
-export function ThemeProvider({ children, defaultTheme = "system" }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem("theme") as Theme) || defaultTheme
-  );
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme] = useState<Theme>(() => {
+    try {
+      return (localStorage.getItem("pgqa-theme") as Theme) ?? "dark";
+    } catch {
+      return "dark";
+    }
+  });
 
   useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-      root.classList.add(systemTheme);
-    } else {
-      root.classList.add(theme);
-    }
-    localStorage.setItem("theme", theme);
+    root.classList.add(theme);
+    localStorage.setItem("pgqa-theme", theme);
   }, [theme]);
 
+  function toggle() {
+    setTheme((t) => (t === "dark" ? "light" : "dark"));
+  }
+
   return (
-    <ThemeProviderContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, toggle }}>
       {children}
-    </ThemeProviderContext.Provider>
+    </ThemeContext.Provider>
   );
 }
 
 export function useTheme() {
-  return useContext(ThemeProviderContext);
+  return useContext(ThemeContext);
 }
