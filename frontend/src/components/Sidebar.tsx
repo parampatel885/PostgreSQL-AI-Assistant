@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { useTheme } from "./ThemeProvider";
 
+import { ThemeToggle } from "./ThemeToggle";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+
 import {
   Database,
   FolderOpen,
@@ -12,8 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
-  Moon,
-  Sun,
+ 
 } from "lucide-react";
 
 const API_BASE = "http://localhost:3000";
@@ -32,7 +30,7 @@ const navItems = [
 
 export function Sidebar({ activePage, onNavigate }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
-  const { theme, setTheme } = useTheme();
+
 
   async function handleLogout() {
     await fetch(`${API_BASE}/api/auth/logout`, {
@@ -83,25 +81,7 @@ export function Sidebar({ activePage, onNavigate }: SidebarProps) {
       {/* Bottom Section */}
       <div className="p-3 space-y-2">
         {/* Theme Toggle */}
-        <div className={`flex items-center gap-3 px-2 py-1 ${collapsed ? "justify-center" : ""}`}>
-          {collapsed ? (
-            <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-              {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-          ) : (
-            <>
-              <Sun size={16} className="text-muted-foreground" />
-              <Switch
-                checked={theme === "dark"}
-                onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
-              />
-              <Moon size={16} className="text-muted-foreground" />
-              <Label className="text-xs text-muted-foreground ml-1">
-                {theme === "dark" ? "Dark" : "Light"}
-              </Label>
-            </>
-          )}
-        </div>
+        <ThemeToggle />
 
         {/* Logout */}
         <button
