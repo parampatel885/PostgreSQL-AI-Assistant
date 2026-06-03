@@ -56,6 +56,15 @@ export async function runQuestionQuery(
 
   const rows = await runSelectSql(decrypt(project.databaseUrl), safeSql);
 
+  // logs are created
+await prisma.queryLog.create({
+  data: {
+    projectId: BigInt(projectId),
+    query: question,
+    sql: safeSql,
+  },
+});
+
   return { sql: safeSql, rows };
 }
 

@@ -8,6 +8,7 @@ import { queryAssistantRouter } from "./modules/query-assistant/query.routes";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { authRouter } from "./modules/auth/auth.routes";
+import prisma from "./config/prisma";
 
 const globalLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -86,4 +87,25 @@ app.use("/api/auth", applyAuthRouteLimits, authRouter);
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err);
   res.status(500).json({ error: "Internal server error" });
+});
+
+app.get("/test-embeddings/:projectId", async (req, res) => {
+  const question = req.query.question as string ?? "show me all orders";
+  const projectId = BigInt(req.params.projectId);
+
+  const embedding = await import("./utils/embeddings").then(m => m.generateEmbedding(question));
+  const vectorLiteral = `[${embedding.join(",")}]`;
+
+  const rows = await prisma.$queryRawUnsafe<Array<{ table_name: string; distance: number }>>(
+    `SELECT table_name, embedding <=> $2::vector AS distance
+     FROM schema_tables
+     WHERE project_id = $1 AND embedding IS NOT NULL
+     ORDER BY embedding <=> $2::vector
+     LIMIT 10`,
+    projectId,
+    vectorLiteral,
+    10
+  );
+
+  res.json({ question, tables: rows });
 });

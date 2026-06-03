@@ -154,12 +154,20 @@ function TopBar({ project, onBack }: { project: Project; onBack: () => void }) {
 }
 
 // ─── Query tab ────────────────────────────────────────────────────────────────
+interface QueryTabProps {
+  projectId: number;
+  question: string;
+  setQuestion: (q: string) => void;
+  result: QueryResult | null;
+  setResult: (r: QueryResult | null) => void;
+  error: string | null;
+  setError: (e: string | null) => void;
+  onQuerySuccess: () => void;
+}
 
-function QueryTab({ projectId }: { projectId: number }) {
-  const [question, setQuestion] = useState("");
+function QueryTab({ projectId, question, setQuestion, result, setResult, error, setError,onQuerySuccess }: QueryTabProps) {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<QueryResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -180,6 +188,7 @@ function QueryTab({ projectId }: { projectId: number }) {
       }
       const data = await res.json();
       setResult(data);
+      onQuerySuccess();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Query failed");
     } finally {
@@ -191,7 +200,7 @@ function QueryTab({ projectId }: { projectId: number }) {
   const columnNames = rows.length > 0 ? Object.keys(rows[0]) : [];
 
   return (
-    <div className="space-y-5 max-w-2xl">
+    <div className="space-y-5 w-full">
       <div className="bg-card border border-border rounded-lg p-6">
         <form onSubmit={handleSubmit} className="space-y-3">
           <textarea
@@ -291,9 +300,29 @@ function QueryTab({ projectId }: { projectId: number }) {
 
 // ─── Schema tab ───────────────────────────────────────────────────────────────
 
-function SchemaTab({ projectId }: { projectId: number }) {
+interface SchemaTabProps {
+  projectId: number;
+  tables: SchemaTable[];
+  setTables: (tables: SchemaTable[]) => void;
+}
+
+function SchemaTab({ projectId, tables, setTables }: SchemaTabProps) {
   const [loading, setLoading] = useState(false);
-  const [tables, setTables] = useState<SchemaTable[]>([]);
+  
+  useEffect(() => {
+    fetch(`${API_BASE}/api/projects/${projectId}/schema`, { credentials: "include" })
+      .then(res => res.json())
+      .then(data => {
+        if (data.tables) {
+          const grouped = data.tables.map((t: { tableName: string }) => ({
+            tableName: t.tableName,
+            columns: data.columns.filter((c: any) => c.tableName === t.tableName),
+          }));
+          setTables(grouped);
+        }
+      })
+      .catch(() => {});
+  }, [projectId]);
 
   async function handleRefresh() {
     setLoading(true);
@@ -373,8 +402,11 @@ function SchemaTab({ projectId }: { projectId: number }) {
 }
 
 // ─── Logs tab ─────────────────────────────────────────────────────────────────
-
-function LogsTab({ projectId }: { projectId: number }) {
+interface LogsTabProps {
+  projectId: number;
+  refreshKey: number;  
+}
+function LogsTab({ projectId, refreshKey }: LogsTabProps) {
   const [logs, setLogs] = useState<QueryLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -385,14 +417,14 @@ function LogsTab({ projectId }: { projectId: number }) {
       .then((data) => setLogs(data))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [projectId]);
+  }, [projectId,refreshKey]);
 
   if (loading) return <div className="py-16 text-center"><p className="text-sm text-muted-foreground">Loading logs…</p></div>;
 
   if (logs.length === 0) return <div className="py-16 text-center"><p className="text-sm text-muted-foreground">No queries run yet.</p></div>;
 
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-full">
       <div className="bg-card border border-border rounded-lg overflow-hidden">
         <table className="w-full">
           <thead>
@@ -548,6 +580,12 @@ export function WorkspacePage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("query");
   const [collapsed, setCollapsed] = useState(false);
+  const [logRefreshKey, setLogRefreshKey] = useState(0);
+  
+  const [schemaTables, setSchemaTables] = useState<SchemaTable[]>([]);
+  const [question, setQuestion] = useState("");
+  const [queryResult, setQueryResult] = useState<QueryResult | null>(null);
+  const [queryError, setQueryError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/projects/${id}`, { credentials: "include" })
@@ -580,9 +618,29 @@ export function WorkspacePage() {
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <TopBar project={project} onBack={() => navigate("/projects")} />
         <main className="flex-1 overflow-auto p-6">
-          {activeTab === "query" && <QueryTab projectId={project.id} />}
-          {activeTab === "schema" && <SchemaTab projectId={project.id} />}
-          {activeTab === "logs" && <LogsTab projectId={project.id} />}
+          {activeTab === "query" && 
+          (<QueryTab 
+            projectId={project.id}
+            question={question}
+            setQuestion={setQuestion}
+            result={queryResult}
+            setResult={setQueryResult}
+            error={queryError}
+            setError={setQueryError}
+            onQuerySuccess={() => setLogRefreshKey(k => k + 1)}  
+          />)}
+          {activeTab === "schema" && (
+            <SchemaTab 
+             projectId={project.id}
+             tables={schemaTables}
+             setTables={setSchemaTables} 
+          />)}
+          {activeTab === "logs" && (
+            <LogsTab 
+            projectId={project.id}
+            refreshKey={logRefreshKey} 
+            />
+          )}
           {activeTab === "settings" && <SettingsTab project={project} onDelete={() => navigate("/projects")} />}
         </main>
       </div>

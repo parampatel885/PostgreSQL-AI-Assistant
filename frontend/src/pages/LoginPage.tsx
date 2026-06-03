@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Database, Eye, EyeOff } from "lucide-react";
-
 import { ThemeToggle } from "@/components/ThemeToggle";
-
 
 
 const API_BASE = "http://localhost:3000";
@@ -58,7 +56,7 @@ export function LoginPage() {
   return (
     <div className="min-h-screen w-full bg-background flex items-center justify-center p-4">
       {/* Theme toggle top right */}
-      <ThemeToggle />
+       <ThemeToggle />
 
       <div className="w-full max-w-[400px]">
         {/* Card */}

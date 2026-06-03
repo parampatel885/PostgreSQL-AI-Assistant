@@ -9,11 +9,5 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  server: {
-    proxy: {
-      "/projects": "http://localhost:3000",
-      "/query": "http://localhost:3000",
-      "/health": "http://localhost:3000",
-    },
-  },
+  appType: "spa",
 });

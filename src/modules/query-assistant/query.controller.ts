@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { ProjectNotFoundError, runQuestionQuery } from "./query.service";
+import prisma from "../../config/prisma";
 
 interface QueryBody {
   projectId?: unknown;
@@ -51,4 +52,40 @@ export async function queryAssistantHandler(req: Request, res: Response): Promis
 
     throw error;
   }
+}
+export async function getQueryLogsHandler(req: Request, res: Response): Promise<void> {
+  if (!req.user?.userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const projectId = parseInt(req.params.projectId);
+  if (isNaN(projectId)) {
+    res.status(400).json({ error: "Invalid project ID" });
+    return;
+  }
+
+  // Verify project belongs to user
+  const project = await prisma.project.findFirst({
+    where: { id: BigInt(projectId), userId: req.user.userId },
+  });
+
+  if (!project) {
+    res.status(404).json({ error: "Project not found" });
+    return;
+  }
+
+  const logs = await prisma.queryLog.findMany({
+    where: { projectId: BigInt(projectId) },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+    select: { id: true, query: true, sql: true, createdAt: true },
+  });
+
+  res.json(logs.map(log => ({
+    id: Number(log.id),
+    query: log.query,
+    sql: log.sql,
+    createdAt: log.createdAt.toISOString(),
+  })));
 }

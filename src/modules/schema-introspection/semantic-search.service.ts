@@ -9,12 +9,13 @@ export async function searchRelevantTables(
   const embedding = await generateEmbedding(userQuestion);
   const vectorLiteral = `[${embedding.join(",")}]`;
 
-  const rows = await prisma.$queryRawUnsafe<Array<{ table_name: string }>>(
+  const rows = await prisma.$queryRawUnsafe<Array<{ table_name: string; distance: number }>>(
     `
-      SELECT table_name
+      SELECT table_name, embedding <=> $2::vector AS distance
       FROM schema_tables
       WHERE project_id = $1
         AND embedding IS NOT NULL
+        AND embedding <=> $2::vector < 0.65
       ORDER BY embedding <=> $2::vector
       LIMIT $3
     `,
