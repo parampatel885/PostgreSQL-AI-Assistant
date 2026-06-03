@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const API_BASE = "http://localhost:3000";
+const API_BASE = "https://postgresql-ai-assistant.onrender.com";
 
 interface User {
   id: string;

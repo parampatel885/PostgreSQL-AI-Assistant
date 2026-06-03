@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { LogOut, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 
-const API_BASE = "http://localhost:3000";
+const API_BASE = "https://postgresql-ai-assistant.onrender.com";
 
 interface Project {
   id: number;

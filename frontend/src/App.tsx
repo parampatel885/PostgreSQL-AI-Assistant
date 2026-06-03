@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sidebar } from "@/components/Sidebar";
 import type { ApiError, IntrospectionResult, Project, QueryResult } from "@/types/api";
 
-const API_BASE = "http://localhost:3000";
+const API_BASE = "https://postgresql-ai-assistant.onrender.com";
 
 function maskDatabaseUrl(url: string): string {
   try {

@@ -4,7 +4,7 @@ import { Database, Eye, EyeOff } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 
-const API_BASE = "http://localhost:3000";
+const API_BASE = "https://postgresql-ai-assistant.onrender.com";
 
 function Spinner() {
   return (

@@ -7,7 +7,8 @@ import {
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 
-const API_BASE = "http://localhost:3000";
+
+const API_BASE = "https://postgresql-ai-assistant.onrender.com";
 
 type Tab = "query" | "schema" | "logs" | "settings";
 
