@@ -14,7 +14,7 @@ import {
  
 } from "lucide-react";
 
-const API_BASE = "https://postgresql-ai-assistant.onrender.com";
+import { apiUrl } from "@/config/api";
 
 interface SidebarProps {
   activePage: string;
@@ -33,7 +33,7 @@ export function Sidebar({ activePage, onNavigate }: SidebarProps) {
 
 
   async function handleLogout() {
-    await fetch(`${API_BASE}/api/auth/logout`, {
+    await fetch(apiUrl("/api/auth/logout"), {
       method: "POST",
       credentials: "include",
     });

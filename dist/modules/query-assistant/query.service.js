@@ -46,6 +46,14 @@ async function runQuestionQuery(projectId, question) {
     (0, sql_validator_1.validateSql)(sql);
     const safeSql = enforceLimit(sql);
     const rows = await (0, sql_runner_1.runSelectSql)((0, crypto_1.decrypt)(project.databaseUrl), safeSql);
+    // logs are created
+    await prisma_1.default.queryLog.create({
+        data: {
+            projectId: BigInt(projectId),
+            query: question,
+            sql: safeSql,
+        },
+    });
     return { sql: safeSql, rows };
 }
 async function generateSqlFromPrompt(prompt) {

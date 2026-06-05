@@ -4,7 +4,7 @@ import { Database, Eye, EyeOff } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 
-const API_BASE = "https://postgresql-ai-assistant.onrender.com";
+import { apiUrl } from "@/config/api";
 
 function Spinner() {
   return (
@@ -35,7 +35,7 @@ export function LoginPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE}/api/auth/login`, {
+      const response = await fetch(apiUrl("/api/auth/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

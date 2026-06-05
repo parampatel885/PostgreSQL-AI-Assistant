@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-
-const API_BASE = "https://postgresql-ai-assistant.onrender.com";
+import { apiUrl } from "@/config/api";
 
 interface User {
   id: string;
@@ -18,7 +17,7 @@ export function useAuth(): UseAuthResult {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/auth/me`, {
+    fetch(apiUrl("/api/auth/me"), {
       credentials: "include",
     })
       .then((res) => {

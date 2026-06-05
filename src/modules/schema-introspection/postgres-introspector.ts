@@ -1,4 +1,10 @@
 import { Client } from "pg";
+import {
+  isPostgresConnectionError,
+  logIntrospectionError,
+  logIntrospectionStep,
+  logPostgresConnectionError,
+} from "./introspection.logger";
 
 export interface IntrospectedTable {
   tableName: string;
@@ -24,42 +30,85 @@ export interface IntrospectionResult {
   relationships: IntrospectedRelationship[];
 }
 
+function logStepError(step: string, error: unknown, databaseUrl: string): void {
+  if (isPostgresConnectionError(error)) {
+    logPostgresConnectionError(step, error, databaseUrl);
+    return;
+  }
+  logIntrospectionError(step, error);
+}
+
 export async function introspectPostgresSchema(databaseUrl: string): Promise<IntrospectionResult> {
-  const client = new Client({ connectionString: databaseUrl });
-  await client.connect();
+  let client: Client | null = null;
 
   try {
-    const tablesResult = await client.query<{ table_name: string }>(
-      `
+    logIntrospectionStep("Creating PostgreSQL client");
+    client = new Client({ connectionString: databaseUrl });
+  } catch (error) {
+    logStepError("Creating PostgreSQL client", error, databaseUrl);
+    throw error;
+  }
+
+  try {
+    logIntrospectionStep("Connecting to target database");
+    await client.connect();
+    logIntrospectionStep("Connected successfully");
+  } catch (error) {
+    logStepError("Connecting to target database", error, databaseUrl);
+    throw error;
+  }
+
+  try {
+    let tablesResult;
+    try {
+      logIntrospectionStep("Fetching tables");
+      tablesResult = await client.query<{ table_name: string }>(
+        `
         SELECT table_name
         FROM information_schema.tables
         WHERE table_schema = 'public'
           AND table_type = 'BASE TABLE'
         ORDER BY table_name;
       `
-    );
+      );
+      logIntrospectionStep("Fetching tables completed", { tableCount: tablesResult.rows.length });
+    } catch (error) {
+      logStepError("Fetching tables", error, databaseUrl);
+      throw error;
+    }
 
-    const columnsResult = await client.query<{
-      table_name: string;
-      column_name: string;
-      data_type: string;
-      is_nullable: string;
-    }>(
-      `
+    let columnsResult;
+    try {
+      logIntrospectionStep("Fetching columns");
+      columnsResult = await client.query<{
+        table_name: string;
+        column_name: string;
+        data_type: string;
+        is_nullable: string;
+      }>(
+        `
         SELECT table_name, column_name, data_type, is_nullable
         FROM information_schema.columns
         WHERE table_schema = 'public'
         ORDER BY table_name, ordinal_position;
       `
-    );
+      );
+      logIntrospectionStep("Fetching columns completed", { columnCount: columnsResult.rows.length });
+    } catch (error) {
+      logStepError("Fetching columns", error, databaseUrl);
+      throw error;
+    }
 
-    const relationshipsResult = await client.query<{
-      from_table: string;
-      from_column: string;
-      to_table: string;
-      to_column: string;
-    }>(
-      `
+    let relationshipsResult;
+    try {
+      logIntrospectionStep("Fetching relationships");
+      relationshipsResult = await client.query<{
+        from_table: string;
+        from_column: string;
+        to_table: string;
+        to_column: string;
+      }>(
+        `
         SELECT
           tc.table_name AS from_table,
           kcu.column_name AS from_column,
@@ -75,7 +124,14 @@ export async function introspectPostgresSchema(databaseUrl: string): Promise<Int
         WHERE tc.constraint_type = 'FOREIGN KEY'
         AND tc.table_schema = 'public';
       `
-    );
+      );
+      logIntrospectionStep("Fetching relationships completed", {
+        relationshipCount: relationshipsResult.rows.length,
+      });
+    } catch (error) {
+      logStepError("Fetching relationships", error, databaseUrl);
+      throw error;
+    }
 
     return {
       tables: tablesResult.rows.map((row) => ({
@@ -95,6 +151,12 @@ export async function introspectPostgresSchema(databaseUrl: string): Promise<Int
       })),
     };
   } finally {
-    await client.end();
+    if (client) {
+      try {
+        await client.end();
+      } catch (error) {
+        logIntrospectionError("Closing PostgreSQL client", error);
+      }
+    }
   }
 }

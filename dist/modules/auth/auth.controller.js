@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerHandler = registerHandler;
 exports.loginHandler = loginHandler;
 exports.logoutHandler = logoutHandler;
+exports.getMeHandler = getMeHandler;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const auth_service_1 = require("./auth.service");
@@ -16,7 +17,7 @@ function buildAuthCookieOptions() {
     return {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: "none",
     };
 }
 function getJwtSecret() {
@@ -91,4 +92,10 @@ async function loginHandler(req, res) {
 async function logoutHandler(_req, res) {
     res.clearCookie(TOKEN_COOKIE_NAME, buildAuthCookieOptions());
     res.status(204).send();
+}
+async function getMeHandler(req, res) {
+    if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+    res.json({ id: req.user.userId, email: req.user.email });
 }

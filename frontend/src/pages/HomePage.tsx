@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { LogOut, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 
-const API_BASE = "https://postgresql-ai-assistant.onrender.com";
+import { apiUrl } from "@/config/api";
 
 interface Project {
   id: number;
@@ -48,7 +48,7 @@ export function HomePage() {
 
   async function fetchProjects() {
     try {
-      const res = await fetch(`${API_BASE}/api/projects`, {
+      const res = await fetch(apiUrl("/api/projects"), {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to fetch projects");
@@ -67,7 +67,7 @@ export function HomePage() {
     setCreating(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/projects`, {
+      const res = await fetch(apiUrl("/api/projects"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -89,7 +89,7 @@ export function HomePage() {
   }
 
   async function handleLogout() {
-    await fetch(`${API_BASE}/api/auth/logout`, {
+    await fetch(apiUrl("/api/auth/logout"), {
       method: "POST",
       credentials: "include",
     });

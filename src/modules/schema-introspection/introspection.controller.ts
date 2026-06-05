@@ -1,6 +1,10 @@
 import { Request, Response } from "express";
 import { introspectAndSaveSchema, ProjectNotFoundError } from "./introspection.service";
 import prisma from "../../config/prisma";
+import {
+  buildIntrospectionErrorBody,
+  logIntrospectionError,
+} from "./introspection.logger";
 
 function parseProjectId(value: string | undefined): number | null {
   if (!value) {
@@ -28,12 +32,14 @@ export async function introspectProjectSchemaHandler(req: Request, res: Response
     const result = await introspectAndSaveSchema(projectId);
     res.json(result);
   } catch (error: unknown) {
+    logIntrospectionError("Introspection request failed", error, { projectId });
+
     if (error instanceof ProjectNotFoundError) {
-      res.status(404).json({ error: error.message });
+      res.status(404).json(buildIntrospectionErrorBody(error, projectId));
       return;
     }
 
-    throw error;
+    res.status(500).json(buildIntrospectionErrorBody(error, projectId));
   }
 }
 

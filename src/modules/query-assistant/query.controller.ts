@@ -49,8 +49,17 @@ export async function queryAssistantHandler(req: Request, res: Response): Promis
       res.status(400).json({ error: error.message });
       return;
     }
+    if (error instanceof Error) {
+      console.error("QUERY ERROR:", error);
+      res.status(400).json({
+        error: error.message,
+        stack: process.env.NODE_ENV !== "production" ? error.stack : undefined,
+      });
+      return;
+    }
 
     throw error;
+    
   }
 }
 export async function getQueryLogsHandler(req: Request, res: Response): Promise<void> {

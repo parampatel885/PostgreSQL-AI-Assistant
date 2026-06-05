@@ -8,7 +8,7 @@ import {
 import { useTheme } from "@/components/ThemeProvider";
 
 
-const API_BASE = "https://postgresql-ai-assistant.onrender.com";
+import { apiUrl } from "@/config/api";
 
 type Tab = "query" | "schema" | "logs" | "settings";
 
@@ -177,7 +177,7 @@ function QueryTab({ projectId, question, setQuestion, result, setResult, error, 
     setError(null);
     setResult(null);
     try {
-      const res = await fetch(`${API_BASE}/api/query`, {
+      const res = await fetch(apiUrl("/api/query"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -311,7 +311,7 @@ function SchemaTab({ projectId, tables, setTables }: SchemaTabProps) {
   const [loading, setLoading] = useState(false);
   
   useEffect(() => {
-    fetch(`${API_BASE}/api/projects/${projectId}/schema`, { credentials: "include" })
+    fetch(apiUrl(`/api/projects/${projectId}/schema`), { credentials: "include" })
       .then(res => res.json())
       .then(data => {
         if (data.tables) {
@@ -328,7 +328,7 @@ function SchemaTab({ projectId, tables, setTables }: SchemaTabProps) {
   async function handleRefresh() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/projects/${projectId}/introspect`, {
+      const res = await fetch(apiUrl(`/api/projects/${projectId}/introspect`), {
         method: "POST",
         credentials: "include",
       });
@@ -413,7 +413,7 @@ function LogsTab({ projectId, refreshKey }: LogsTabProps) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/query/${projectId}/logs`, { credentials: "include" })
+    fetch(apiUrl(`/api/query/${projectId}/logs`), { credentials: "include" })
       .then((res) => res.json())
       .then((data) => setLogs(data))
       .catch(() => {})
@@ -472,8 +472,17 @@ function LogsTab({ projectId, refreshKey }: LogsTabProps) {
 
 // ─── Settings tab ─────────────────────────────────────────────────────────────
 
-function SettingsTab({ project, onDelete }: { project: Project; onDelete: () => void }) {
+function SettingsTab({
+  project,
+  onDelete,
+  onUpdate,
+}: {
+  project: Project;
+  onDelete: () => void;
+  onUpdate: (updated: Project) => void;
+}) {
   const [name, setName] = useState(project.name);
+  const [databaseUrl, setDatabaseUrl] = useState(project.databaseUrl);
   const [showUrl, setShowUrl] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -486,13 +495,15 @@ function SettingsTab({ project, onDelete }: { project: Project; onDelete: () => 
     setError(null);
     setSuccess(false);
     try {
-      const res = await fetch(`${API_BASE}/api/projects/${project.id}`, {
+      const res = await fetch(apiUrl(`/api/projects/${project.id}`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, databaseUrl }),
       });
       if (!res.ok) throw new Error("Failed to save");
+      const updated = (await res.json()) as Project;
+      onUpdate(updated);
       setSuccess(true);
     } catch {
       setError("Failed to save changes");
@@ -505,7 +516,7 @@ function SettingsTab({ project, onDelete }: { project: Project; onDelete: () => 
     if (!confirm("Are you sure? This cannot be undone.")) return;
     setDeleting(true);
     try {
-      const res = await fetch(`${API_BASE}/api/projects/${project.id}`, {
+      const res = await fetch(apiUrl(`/api/projects/${project.id}`), {
         method: "DELETE",
         credentials: "include",
       });
@@ -542,7 +553,8 @@ function SettingsTab({ project, onDelete }: { project: Project; onDelete: () => 
               <input
                 id="settings-url"
                 type={showUrl ? "text" : "password"}
-                defaultValue={project.databaseUrl}
+                value={databaseUrl}
+                onChange={(e) => setDatabaseUrl(e.target.value)}
                 className="w-full h-9 px-3 pr-10 text-sm bg-muted border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-colors duration-150"
               />
               <button type="button" tabIndex={-1} onClick={() => setShowUrl((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors duration-150 focus:outline-none">
@@ -589,7 +601,7 @@ export function WorkspacePage() {
   const [queryError, setQueryError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/projects/${id}`, { credentials: "include" })
+    fetch(apiUrl(`/api/projects/${id}`), { credentials: "include" })
       .then((res) => {
         if (!res.ok) throw new Error("Project not found");
         return res.json();
@@ -600,7 +612,7 @@ export function WorkspacePage() {
   }, [id]);
 
   async function handleLogout() {
-    await fetch(`${API_BASE}/api/auth/logout`, { method: "POST", credentials: "include" });
+    await fetch(apiUrl("/api/auth/logout"), { method: "POST", credentials: "include" });
     navigate("/login");
   }
 
@@ -642,7 +654,13 @@ export function WorkspacePage() {
             refreshKey={logRefreshKey} 
             />
           )}
-          {activeTab === "settings" && <SettingsTab project={project} onDelete={() => navigate("/projects")} />}
+          {activeTab === "settings" && (
+            <SettingsTab
+              project={project}
+              onDelete={() => navigate("/projects")}
+              onUpdate={setProject}
+            />
+          )}
         </main>
       </div>
     </div>

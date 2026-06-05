@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sidebar } from "@/components/Sidebar";
 import type { ApiError, IntrospectionResult, Project, QueryResult } from "@/types/api";
 
-const API_BASE = "https://postgresql-ai-assistant.onrender.com";
+import { apiUrl } from "@/config/api";
 
 function maskDatabaseUrl(url: string): string {
   try {
@@ -57,7 +57,7 @@ export function App(): JSX.Element {
     setError(null);
     setFeedback(null);
     try {
-      const response = await fetch(`${API_BASE}/api/projects`, {
+      const response = await fetch(apiUrl("/api/projects"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -82,7 +82,7 @@ export function App(): JSX.Element {
     setError(null);
     setFeedback(null);
     try {
-      const response = await fetch(`${API_BASE}/api/projects/${currentProject.id}/introspect`, {
+      const response = await fetch(apiUrl(`/api/projects/${currentProject.id}/introspect`), {
         method: "POST",
         credentials: "include",
       });
@@ -102,7 +102,7 @@ export function App(): JSX.Element {
     setError(null);
     setFeedback(null);
     try {
-      const response = await fetch(`${API_BASE}/api/query`, {
+      const response = await fetch(apiUrl("/api/query"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
