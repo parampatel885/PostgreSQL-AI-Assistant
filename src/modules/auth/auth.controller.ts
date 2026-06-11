@@ -8,10 +8,11 @@ const TOKEN_COOKIE_NAME = "token";
 const TOKEN_EXPIRES_IN = "7d";
 
 function buildAuthCookieOptions() {
+  const isProd = process.env.NODE_ENV === "production";
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "none" as const,
+    secure: isProd,
+    sameSite: isProd ? ("none" as const) : ("lax" as const),
   };
 }
 
