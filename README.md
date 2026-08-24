@@ -110,7 +110,7 @@ When a user submits a question in the query workspace:
 2.  **Semantic Table Search**: Runs a query comparing the question embedding against `schema_tables.embedding` using cosine distance (`<=>`). It returns up to 5 tables matching a similarity threshold `< 0.65`.
 3.  **Load Active Schema**: Retrieves schema details (columns, data types, nullability) and active table relationships for the matched tables. If no tables are semantically matched, it defaults to loading the full schema.
 4.  **Prompt Construction**: Generates a context-aware system prompt containing active tables, columns, foreign-key relationships, and strict generation constraints.
-5.  **LLM Execution**: Sends the system prompt to OpenRouter (using `openai/gpt-oss-120b:free` or equivalent model) to generate raw SQL.
+5.  **LLM Execution**: Sends the system prompt to OpenRouter (using `google/gemma-2-9b-it:free` or equivalent model, configurable via `OPENROUTER_MODEL`) to generate raw SQL.
 6.  **Security Inspection**:
     *   Inspects the output SQL. It must start with `SELECT` (case-insensitive).
     *   Asserts that it contains no blacklisted keywords (`INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, etc.).

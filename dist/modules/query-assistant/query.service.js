@@ -70,7 +70,7 @@ async function generateSqlFromPrompt(prompt) {
         },
     });
     const completion = await client.chat.completions.create({
-        model: "openai/gpt-oss-120b:free",
+        model: process.env.OPENROUTER_MODEL || "openai/gpt-oss-120b",
         messages: [
             {
                 role: "user",

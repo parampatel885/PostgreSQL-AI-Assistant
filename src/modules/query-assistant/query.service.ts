@@ -4,6 +4,7 @@ import { buildQueryPromptAsync, SchemaRelationship } from "./prompt-builder";
 import { runSelectSql } from "./sql-runner";
 import { validateSql } from "./sql-validator";
 import OpenAI from "openai";
+import { env } from "../../config/env";
 
 export interface QueryAssistantResult {
   sql: string;
@@ -69,15 +70,13 @@ await prisma.queryLog.create({
 }
 
 async function generateSqlFromPrompt(prompt: string): Promise<string> {
-  const openRouterApiKey = process.env.OPENROUTER_API_KEY;
-
-  if (!openRouterApiKey) {
+  if (!env.openRouterApiKey) {
     return "SELECT 1 AS placeholder_result";
   }
 
   const client = new OpenAI({
-    apiKey: openRouterApiKey,
-    baseURL: "https://openrouter.ai/api/v1",
+    apiKey: env.openRouterApiKey,
+    baseURL: env.openRouterBaseUrl,
     defaultHeaders: {
       "HTTP-Referer": "http://localhost:3000",
       "X-Title": "PostgreSQL Query Assistant",
@@ -85,7 +84,7 @@ async function generateSqlFromPrompt(prompt: string): Promise<string> {
   });
 
   const completion = await client.chat.completions.create({
-    model: "openai/gpt-oss-120b:free",
+    model: env.openRouterModel,
     messages: [
       {
         role: "user",

@@ -1,27 +1,26 @@
-const EMBEDDING_MODEL = "openai/text-embedding-3-small";
+import { env } from "../config/env";
+
 const EMBEDDING_DIMENSIONS = 1536;
-const OPENROUTER_EMBEDDINGS_URL = "https://openrouter.ai/api/v1/embeddings";
 
 interface OpenRouterEmbeddingResponse {
   data?: Array<{ embedding?: number[] }>;
 }
 
 export async function generateEmbedding(text: string): Promise<number[]> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey || apiKey.trim().length === 0) {
+  if (!env.openRouterApiKey || env.openRouterApiKey.trim().length === 0) {
     throw new Error("OPENROUTER_API_KEY is required for embeddings.");
   }
 
-  const response = await fetch(OPENROUTER_EMBEDDINGS_URL, {
+  const response = await fetch(`${env.openRouterBaseUrl}/embeddings`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${env.openRouterApiKey}`,
       "Content-Type": "application/json",
       "HTTP-Referer": "http://localhost:3000",
       "X-Title": "PostgreSQL Query Assistant",
     },
     body: JSON.stringify({
-      model: EMBEDDING_MODEL,
+      model: env.embeddingModel,
       input: text,
       dimensions: EMBEDDING_DIMENSIONS,
     }),
