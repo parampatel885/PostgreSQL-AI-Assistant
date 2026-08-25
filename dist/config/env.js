@@ -24,4 +24,8 @@ if (encryptionKey.length !== 32) {
 exports.env = {
     port: Number(process.env.PORT ?? 4000),
     databaseUrl: process.env.DATABASE_URL,
+    openRouterApiKey: process.env.OPENROUTER_API_KEY,
+    openRouterBaseUrl: process.env.OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1",
+    openRouterModel: process.env.OPENROUTER_MODEL || "google/gemma-2-9b-it:free",
+    embeddingModel: process.env.EMBEDDING_MODEL || "openai/text-embedding-3-small",
 };

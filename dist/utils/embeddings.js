@@ -1,24 +1,22 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateEmbedding = generateEmbedding;
-const EMBEDDING_MODEL = "openai/text-embedding-3-small";
+const env_1 = require("../config/env");
 const EMBEDDING_DIMENSIONS = 1536;
-const OPENROUTER_EMBEDDINGS_URL = "https://openrouter.ai/api/v1/embeddings";
 async function generateEmbedding(text) {
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey || apiKey.trim().length === 0) {
+    if (!env_1.env.openRouterApiKey || env_1.env.openRouterApiKey.trim().length === 0) {
         throw new Error("OPENROUTER_API_KEY is required for embeddings.");
     }
-    const response = await fetch(OPENROUTER_EMBEDDINGS_URL, {
+    const response = await fetch(`${env_1.env.openRouterBaseUrl}/embeddings`, {
         method: "POST",
         headers: {
-            Authorization: `Bearer ${apiKey}`,
+            Authorization: `Bearer ${env_1.env.openRouterApiKey}`,
             "Content-Type": "application/json",
             "HTTP-Referer": "http://localhost:3000",
             "X-Title": "PostgreSQL Query Assistant",
         },
         body: JSON.stringify({
-            model: EMBEDDING_MODEL,
+            model: env_1.env.embeddingModel,
             input: text,
             dimensions: EMBEDDING_DIMENSIONS,
         }),

@@ -17,3 +17,12 @@ exports.authRouter.post("/logout", (req, res, next) => {
 exports.authRouter.get("/me", authenticate_1.authenticate, (req, res, next) => {
     (0, auth_controller_1.getMeHandler)(req, res).catch(next);
 });
+exports.authRouter.get("/sessions", authenticate_1.authenticate, (req, res, next) => {
+    (0, auth_controller_1.getSessionsHandler)(req, res).catch(next);
+});
+exports.authRouter.post("/sessions/:id/revoke", authenticate_1.authenticate, (req, res, next) => {
+    (0, auth_controller_1.revokeSessionHandler)(req, res).catch(next);
+});
+exports.authRouter.post("/logout-all", authenticate_1.authenticate, (req, res, next) => {
+    (0, auth_controller_1.logoutAllHandler)(req, res).catch(next);
+});

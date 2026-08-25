@@ -11,6 +11,7 @@ const prompt_builder_1 = require("./prompt-builder");
 const sql_runner_1 = require("./sql-runner");
 const sql_validator_1 = require("./sql-validator");
 const openai_1 = __importDefault(require("openai"));
+const env_1 = require("../../config/env");
 class ProjectNotFoundError extends Error {
     constructor(projectId) {
         super(`Project with id '${projectId}' not found.`);
@@ -57,20 +58,19 @@ async function runQuestionQuery(projectId, question) {
     return { sql: safeSql, rows };
 }
 async function generateSqlFromPrompt(prompt) {
-    const openRouterApiKey = process.env.OPENROUTER_API_KEY;
-    if (!openRouterApiKey) {
+    if (!env_1.env.openRouterApiKey) {
         return "SELECT 1 AS placeholder_result";
     }
     const client = new openai_1.default({
-        apiKey: openRouterApiKey,
-        baseURL: "https://openrouter.ai/api/v1",
+        apiKey: env_1.env.openRouterApiKey,
+        baseURL: env_1.env.openRouterBaseUrl,
         defaultHeaders: {
             "HTTP-Referer": "http://localhost:3000",
             "X-Title": "PostgreSQL Query Assistant",
         },
     });
     const completion = await client.chat.completions.create({
-        model: process.env.OPENROUTER_MODEL || "openai/gpt-oss-120b",
+        model: env_1.env.openRouterModel,
         messages: [
             {
                 role: "user",
